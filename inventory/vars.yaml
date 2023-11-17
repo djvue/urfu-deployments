@@ -1,0 +1,3 @@
+all:
+  vars:
+    acme_email: d@ggpa.ru

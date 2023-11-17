@@ -1,0 +1,14 @@
+- name: Get nginx container id
+  ansible.builtin.shell: "docker ps | grep {{ nginx_service_name }} | awk '{print $1}'"
+  register: get_container_id_command
+
+- name: Set nginx container variable
+  ansible.builtin.set_fact:
+    container_id: "{{ get_container_id_command.stdout }}"
+
+- name: Report nginx container id
+  ansible.builtin.debug:
+    msg: "{{ container_id }}"
+
+- name: Restart nginx
+  ansible.builtin.command: "docker exec -i {{ container_id }} sh -c 'nginx -s reload'"

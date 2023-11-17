@@ -1,0 +1,154 @@
+---
+- name: Deploy alpha
+  hosts: prod
+  vars:
+    nginx_port: 13381
+
+    dir: /opt/alpha
+    logs_dir: "{{ dir }}/app_log"
+
+    stack_label: alpha
+    network_name: alpha
+
+    service_php_fpm: "{{ stack_label }}_php-fpm"
+    service_frontend: "{{ stack_label }}_frontend"
+    service_nginx: "{{ stack_label }}_nginx"
+    service_redis: "{{ stack_label }}_redis"
+
+    image_tag: latest
+    php_fpm_image: "registry.gitlab.com/alpha-project4/backend/back:{{ image_tag }}"
+    nginx_image: "registry.gitlab.com/alpha-project4/backend/nginx:{{ image_tag }}"
+    frontend_image: "registry.gitlab.com/alpha-project4/frontend/front:{{ image_tag }}"
+    redis_image: "redis:6-alpine"
+
+    logging_config:
+      driver: json-file
+      options:
+        max-file: "1"
+        max-size: "200k"
+
+    backend_env:
+      APP_ENV: prod
+      HOST: "https://alpha.ggpa.ru"
+
+      DB_HOST: mysql
+      DB_NAME: "alpha"
+      DB_USER: "root"
+      DB_PASSWORD: ""
+
+      S3_KEY: "{{ s3_backup_key }}"
+      S3_SECRET: "{{ s3_backup_secret }}"
+
+    frontend_env:
+      API_HOST: "http://nginx"
+
+  tasks:
+    - name: Create base dir
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - "{{ dir }}"
+        - "{{ logs_dir }}"
+
+    - name: Docker login
+      ansible.builtin.import_tasks: ../tasks/docker_login.yaml
+
+    - name: Create network
+      tags: [network]
+      community.docker.docker_network:
+        name: "{{ network_name }}"
+        scope: swarm
+        driver: overlay
+        attachable: true
+        labels:
+          stack: "{{ stack_label }}"
+
+    - name: Pull php-fpm image
+      tags: [backend]
+      community.docker.docker_image:
+        name: "{{ php_fpm_image }}"
+        source: pull
+
+    - name: Run service php-fpm
+      tags: [backend]
+      docker_swarm_service:
+        name: "{{ service_php_fpm }}"
+        image: "{{ php_fpm_image }}"
+        resolve_image: true
+        force_update: true
+        networks:
+          - name: "{{ network_name }}"
+            aliases: [php-fpm]
+          - name: "db_mysql"
+        logging: "{{ logging_config }}"
+        env: "{{ backend_env }}"
+        labels:
+          stack: "{{ stack_label }}"
+        mounts:
+          - source: "{{ logs_dir }}"
+            target: /var/www/storage/logs
+            type: bind
+
+    - name: Pull nginx image
+      tags: [backend]
+      community.docker.docker_image:
+        name: "{{ nginx_image }}"
+        source: pull
+
+    - name: Run service nginx
+      tags: [backend]
+      docker_swarm_service:
+        name: "{{ service_nginx }}"
+        image: "{{ nginx_image }}"
+        resolve_image: true
+        force_update: true
+        networks:
+          - name: "{{ network_name }}"
+            aliases: [nginx]
+        logging: "{{ logging_config }}"
+        labels:
+          stack: "{{ stack_label }}"
+        publish:
+          - published_port: "{{ nginx_port }}"
+            target_port: 80
+
+    - name: Pull frontend image
+      tags: [frontend]
+      community.docker.docker_image:
+        name: "{{ frontend_image }}"
+        source: pull
+
+    - name: Run service frontend
+      tags: [frontend]
+      docker_swarm_service:
+        name: "{{ service_frontend }}"
+        image: "{{ frontend_image }}"
+        resolve_image: true
+        force_update: true
+        networks:
+          - name: "{{ network_name }}"
+            aliases: [front]
+        logging: "{{ logging_config }}"
+        labels:
+          stack: "{{ stack_label }}"
+        env: "{{ frontend_env }}"
+
+    - name: Pull redis image
+      community.docker.docker_image:
+        name: "{{ redis_image }}"
+        source: pull
+
+    - name: Run service redis
+      docker_swarm_service:
+        name: "{{ service_redis }}"
+        image: "{{ redis_image }}"
+        resolve_image: true
+        force_update: true
+        networks:
+          - name: "{{ network_name }}"
+            aliases: [redis]
+        logging: "{{ logging_config }}"
+        labels:
+          stack: "{{ stack_label }}"

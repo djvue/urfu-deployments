@@ -1,0 +1,74 @@
+---
+- name: Deploy ml1 project
+  hosts: prod
+  vars:
+    project: "ml1"
+    dir: "/opt/{{ project }}"
+
+    fastapi_port: "14100"
+    streamlit_port: "14200"
+
+    image_tag: "develop"
+
+    stack_label: "{{ project }}"
+
+    service_fastapi: "{{ project }}_fastapi"
+    service_streamlit: "{{ project }}_streamlit"
+
+    fastapi_image: "registry.gitlab.com/djvue/urfu-deployments/mlproject-fastapi:{{ image_tag }}"
+    streamlit_image: "registry.gitlab.com/djvue/urfu-deployments/mlproject-streamlit:{{ image_tag }}"
+
+    logging_config:
+      driver: "json-file"
+      options:
+        max-file: "1"
+        max-size: "10000k"
+
+  tasks:
+    - name: Create base dir
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - "{{ dir }}"
+
+    - name: Docker login
+      ansible.builtin.import_tasks: ./tasks/docker_login.yaml
+
+    - name: Pull an image fastapi
+      community.docker.docker_image:
+        name: "{{ fastapi_image }}"
+        source: pull
+
+    - name: Run service fastapi
+      docker_swarm_service:
+        name: "{{ service_fastapi }}"
+        image: "{{ fastapi_image }}"
+        resolve_image: true
+        force_update: true
+        logging: "{{ logging_config }}"
+        env: "{{ php_fpm_env }}"
+        labels:
+          stack: "{{ stack_label }}"
+        publish:
+          - published_port: "{{ fastapi_port }}"
+            target_port: 80
+
+    - name: Pull an image streamlit
+      community.docker.docker_image:
+        name: "{{ streamlit_image }}"
+        source: pull
+
+    - name: Run service streamlit
+      docker_swarm_service:
+        name: "{{ service_streamlit }}"
+        image: "{{ streamlit_image }}"
+        resolve_image: true
+        force_update: true
+        logging: "{{ logging_config }}"
+        labels:
+          stack: "{{ stack_label }}"
+        publish:
+          - published_port: "{{ streamlit_port }}"
+            target_port: 80

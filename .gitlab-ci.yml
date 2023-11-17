@@ -1,0 +1,70 @@
+image: alpine
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
+
+  ANSIBLE_FORCE_COLOR: "true"
+  ANSIBLE_HOST_KEY_CHECKING: "False"
+
+stages:
+  - lint
+  - job
+
+.job: &job
+  image: cytopia/ansible:latest-aws
+  stage: job
+  before_script:
+    - ansible --version
+    - chmod 400 $SSH_KEY_NEW
+  script:
+    - ansible-playbook -i ci-env.yaml -i inventory playbooks/$CI_JOB_NAME.yaml
+  rules:
+    - if: $target == $CI_JOB_NAME
+      when: always
+    - when: never
+
+.deploy_job: &deploy_job
+  <<: *job
+  script:
+    - '[ -z "$image_tag" ] && export image_tag=latest'
+    - '[ -z "$tags" ] || export tags="$tags,untagged"'
+    - '[ -z "$tags" ] && export tags=all'
+    - echo "Running playbooks/deploy/$CI_JOB_NAME.yaml"
+    - echo $image_tag
+    - echo $tags
+    - ansible-playbook -i ci-env.yaml -i inventory playbooks/deploy/$CI_JOB_NAME.yaml -e image_tag=$image_tag --tags "$tags"
+
+lint-playbooks:
+  image:
+    name: cytopia/ansible-lint:latest
+    entrypoint: [ "/bin/sh", "-c" ]
+  stage: lint
+  allow_failure: true
+  before_script:
+    - ansible-lint --version
+  script:
+    - ansible-lint --offline -c ansible-lint.yaml -p playbooks/*.yaml
+  rules:
+    - if: $target
+      when: never
+    - when: always
+
+ping-hosts:
+  image: cytopia/ansible:latest-tools
+  stage: lint
+  allow_failure: true
+  before_script:
+    - ansible --version
+    - chmod 400 $SSH_KEY_NEW
+  script:
+    #- ansible -i ci-env.yaml -i inventory prod -m debug -a "var=hostvars[inventory_hostname]"
+    - ansible -i ci-env.yaml -i inventory prod -m ping
+  rules:
+    - if: $target
+      when: never
+    - when: always
+
+deploy_ml1:
+  <<: *deploy_job
