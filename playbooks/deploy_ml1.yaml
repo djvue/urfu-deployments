@@ -48,7 +48,6 @@
         resolve_image: true
         force_update: true
         logging: "{{ logging_config }}"
-        env: "{{ php_fpm_env }}"
         labels:
           stack: "{{ stack_label }}"
         publish:
