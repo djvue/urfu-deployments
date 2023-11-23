@@ -34,7 +34,7 @@ stages:
     - echo "Running playbooks/deploy/$CI_JOB_NAME.yaml"
     - echo $image_tag
     - echo $tags
-    - ansible-playbook -i ci-env.yaml -i inventory playbooks/deploy/$CI_JOB_NAME.yaml -e image_tag=$image_tag --tags "$tags"
+    - ansible-playbook -i ci-env.yaml -i inventory playbooks/$CI_JOB_NAME.yaml -e image_tag=$image_tag --tags "$tags"
 
 lint-playbooks:
   image:
