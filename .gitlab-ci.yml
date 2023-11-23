@@ -17,7 +17,7 @@ stages:
   stage: job
   before_script:
     - ansible --version
-    - chmod 400 $SSH_KEY_NEW
+    - chmod 400 $SSH_KEY
   script:
     - ansible-playbook -i ci-env.yaml -i inventory playbooks/$CI_JOB_NAME.yaml
   rules:
@@ -57,7 +57,7 @@ ping-hosts:
   allow_failure: true
   before_script:
     - ansible --version
-    - chmod 400 $SSH_KEY_NEW
+    - chmod 400 $SSH_KEY
   script:
     #- ansible -i ci-env.yaml -i inventory prod -m debug -a "var=hostvars[inventory_hostname]"
     - ansible -i ci-env.yaml -i inventory prod -m ping
