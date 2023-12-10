@@ -5,12 +5,7 @@ ansible -i env.yaml -i inventory prod -m debug -a "var=hostvars[inventory_hostna
 
 ansible -i env.yaml -i inventory prod -m ping
 
-
-ansible-playbook -i env.yaml -i inventory playbooks/backup_db_prod.yaml
-
-ansible-playbook -i env.yaml -i inventory playbooks/restore_db_prod.yaml  --extra-vars backup_name=db_2022-12-24_19-31-46.tar.bz2
-
-ansible-playbook -i env.yaml -i inventory playbooks/renew_cert.yaml -e domain=www.beloc.ru
+ansible-playbook -i env.yaml -i inventory playbooks/deploy_m1.yaml  --extra-vars image_tag=main
 ```
 
 ## See

@@ -13,7 +13,7 @@
 
     service_streamlit: "{{ project }}_streamlit"
 
-    streamlit_image: "registry.gitlab.com/djvue/urfu-deployments/hackathon-2023-streamlit:{{ image_tag }}"
+    streamlit_image: "djvue/urfu-deployments:hackathon-2023-streamlit-{{ image_tag }}"
 
     logging_config:
       driver: "json-file"
