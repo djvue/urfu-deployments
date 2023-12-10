@@ -22,9 +22,9 @@ jobs:
         shell: bash
         env:
           ANSIBLE_HOST_KEY_CHECKING: False
-          CI_REGISTRY: ${{ secrets.DISPATCH_TOKEN }}
-          CI_REGISTRY_USER: ${{ secrets.DISPATCH_TOKEN }}
-          CI_REGISTRY_PASSWORD: ${{ secrets.DISPATCH_TOKEN }}
+          #CI_REGISTRY: ${{ secrets.DISPATCH_TOKEN }}
+          CI_REGISTRY_USER: ${{ secrets.CI_REGISTRY_USER }}
+          CI_REGISTRY_PASSWORD: ${{ secrets.CI_REGISTRY_PASSWORD }}
           SSH_KEY: /home/runner/.ssh/id_rsa
 
           playbook: deploy_ml1.yaml
