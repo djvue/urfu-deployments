@@ -50,3 +50,6 @@
         publish:
           - published_port: "{{ streamlit_port }}"
             target_port: 8501
+
+    - name: Docker login
+      ansible.builtin.import_tasks: ./tasks/docker_clear.yaml
