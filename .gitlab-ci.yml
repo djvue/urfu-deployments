@@ -68,3 +68,6 @@ ping-hosts:
 
 deploy_ml1:
   <<: *deploy_job
+
+deploy_hackathon_2023:
+  <<: *deploy_job

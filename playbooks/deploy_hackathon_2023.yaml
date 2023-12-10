@@ -1,0 +1,52 @@
+---
+- name: Deploy hackathon 2023 project
+  hosts: prod
+  vars:
+    project: "hackathon-2023"
+    dir: "/opt/{{ project }}"
+
+    streamlit_port: "14500"
+
+    image_tag: "main"
+
+    stack_label: "{{ project }}"
+
+    service_streamlit: "{{ project }}_streamlit"
+
+    streamlit_image: "registry.gitlab.com/djvue/urfu-deployments/hackathon-2023-streamlit:{{ image_tag }}"
+
+    logging_config:
+      driver: "json-file"
+      options:
+        max-file: "1"
+        max-size: "10000k"
+
+  tasks:
+    - name: Create base dir
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      with_items:
+        - "{{ dir }}"
+
+    - name: Docker login
+      ansible.builtin.import_tasks: ./tasks/docker_login.yaml
+
+    - name: Pull an image streamlit
+      community.docker.docker_image:
+        name: "{{ streamlit_image }}"
+        source: pull
+
+    - name: Run service streamlit
+      docker_swarm_service:
+        name: "{{ service_streamlit }}"
+        image: "{{ streamlit_image }}"
+        resolve_image: true
+        force_update: true
+        logging: "{{ logging_config }}"
+        labels:
+          stack: "{{ stack_label }}"
+        publish:
+          - published_port: "{{ streamlit_port }}"
+            target_port: 8501
