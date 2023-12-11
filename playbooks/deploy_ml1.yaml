@@ -8,15 +8,15 @@
     fastapi_port: "14100"
     streamlit_port: "14200"
 
-    image_tag: "develop"
+    image_tag: "main"
 
     stack_label: "{{ project }}"
 
     service_fastapi: "{{ project }}_fastapi"
     service_streamlit: "{{ project }}_streamlit"
 
-    fastapi_image: "registry.gitlab.com/djvue/urfu-deployments/mlproject-fastapi:{{ image_tag }}"
-    streamlit_image: "registry.gitlab.com/djvue/urfu-deployments/mlproject-streamlit:{{ image_tag }}"
+    fastapi_image: "djvue/urfu-deployments:streamlit-mlproject-fastapi-{{ image_tag }}"
+    streamlit_image: "djvue/urfu-deployments:streamlit-mlproject-streamlit-{{ image_tag }}"
 
     logging_config:
       driver: "json-file"
@@ -72,5 +72,5 @@
           - published_port: "{{ streamlit_port }}"
             target_port: 8501
 
-    - name: Docker login
+    - name: Docker clear
       ansible.builtin.import_tasks: ./tasks/docker_clear.yaml
