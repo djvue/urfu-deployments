@@ -30,6 +30,8 @@ jobs:
           playbook: deploy_hackathon_2023.yaml
           image_tag: ${{ github.event.client_payload.image_tag }}
           ansible_tags: ${{ github.event.client_payload.ansible_tags }}
+
+          YANDEX_TTS_TOKEN: ${{ secrets.YANDEX_TTS_TOKEN }}
         run: |
           service ssh status
           ansible-playbook -i ci-env.yaml -i inventory playbooks/$playbook -e image_tag=$image_tag --tags "$ansible_tags"

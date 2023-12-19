@@ -47,6 +47,8 @@
         logging: "{{ logging_config }}"
         labels:
           stack: "{{ stack_label }}"
+        env:
+          YANDEX_TTS_TOKEN: "{{ YANDEX_TTS_TOKEN }}"
         publish:
           - published_port: "{{ streamlit_port }}"
             target_port: 8501

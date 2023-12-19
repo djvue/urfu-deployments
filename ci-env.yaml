@@ -4,6 +4,8 @@ all:
     CI_REGISTRY_USER: "{{ lookup('env', 'CI_REGISTRY_USER') }}"
     CI_REGISTRY_PASSWORD: "{{ lookup('env', 'CI_REGISTRY_PASSWORD') }}"
 
+    YANDEX_TTS_TOKEN: "{{ lookup('env', 'YANDEX_TTS_TOKEN') }}"
+
 prod:
   vars:
     ssh_key_file_path: "{{ lookup('env', 'SSH_KEY') }}"
